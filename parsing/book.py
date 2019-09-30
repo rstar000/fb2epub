@@ -1,4 +1,4 @@
-from collections import deque
+from collections import deque, namedtuple
 from typing import List, NamedTuple, Optional, Dict, Union
 from PIL import Image
 from parsing.rich_text import RichText
@@ -15,23 +15,20 @@ book parsing possible.
 
 MaybeString = Optional[str]
 
+class SectionHeader(namedtuple('SectionHeader', [
+    'title', 'image'
+])):
+    pass
 
-class SectionHeader(NamedTuple):
-    title: RichText
-    image: Optional[Image.Image]
+class Section(namedtuple('Section', [
+    'header', 'contents', 'subsections'
+])):
+    pass
 
-
-class Section(NamedTuple):
-    header: SectionHeader
-    contents: RichText
-    subsections: List
-
-
-class Author(NamedTuple):
-    first_name: MaybeString
-    last_name: MaybeString
-    nickname: MaybeString
-
+class Author(namedtuple('Author', [
+    'first_name', 'last_name', 'nickname'
+])):
+    pass
 
 class Description(NamedTuple):
     title: str
@@ -76,7 +73,7 @@ def get_flat_sections(book):
 
     while to_traverse:
         s, depth = to_traverse.popleft()
-        traversed.append((s, depth))
+        traversed.append(FlatSection(s, depth))
         to_traverse.extendleft(_add_depth(reversed(s.subsections), depth + 1))
 
     return traversed

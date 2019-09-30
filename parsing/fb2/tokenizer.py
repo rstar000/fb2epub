@@ -1,4 +1,6 @@
-from collections import deque
+from collections import deque, namedtuple
+from enum import Enum
+
 from parsing.utils import maybe
 from parsing.rich_text import TokenType as tt
 from parsing.rich_text import (
@@ -68,22 +70,28 @@ def fb2_node_to_token(node):
     return handler(node)
 
 
+MarkedNode = namedtuple('MarkedNode', ['value', 'mark'])
+
+
 def _generate_tokens(elem):
-    nodes_queue = deque([elem])
-    tail = []
+    stack = deque([MarkedNode(elem, False)])
 
-    while nodes_queue:
-        node = nodes_queue.pop()
-        token = fb2_node_to_token(node)
-        if token:
-            yield token
+    while stack:
+        node = stack.pop()
+        token = fb2_node_to_token(node.value)
+        element = node.value
+        # Unmarked: Traverse the node
+        if not node.mark:
+            # Add the opening token if necessary
+            if token:
+                yield token
 
-        yield from tokenize_text(node.text)
+            yield from tokenize_text(element.text)
 
-        tail.extend(reversed(list(tokenize_text(node.tail))))
-        if needs_closing_token(token):
-            tail.append(make_closing())
-
-        nodes_queue.extend(reversed(list(node)))
-
-    yield from reversed(tail)
+            stack.append(node._replace(mark=True))
+            children = reversed(list(element))
+            stack.extend(map(lambda x: MarkedNode(x, False), children))
+        else:  # Marked: Remove node
+            yield from tokenize_text(element.tail)
+            if needs_closing_token(token):
+                yield make_closing()

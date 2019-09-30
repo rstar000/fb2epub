@@ -92,6 +92,43 @@ class BaseParser:
 
 
 class PlainTextParser(BaseParser):
+    def __init__(self, line_breaks=True):
+        super().__init__()
+        self.text = ''
+        self._line_breaks = line_breaks
+
+    def handle(self, token, closing=False):
+        if token.type == TokenType.Word:
+            self.text += (token.attributes['text'] + ' ')
+        elif token.type == TokenType.Paragraph:
+            if closing and self._line_breaks:
+                self.text += '\n'
+
+
+def _link_to_html(token, closing):
+    if closing:
+        return '</a>'
+    else:
+        return '<a href={}>'.format(token.attributes['href'])
+
+
+class HTMLParser(BaseParser):
+    TOKEN_TO_TAG = {
+        TokenType.Strong: ('<span class="b">', '</span>'),
+        TokenType.Emphasis: ('<span class="i">', '</span>'),
+        TokenType.Style: ('<span class="u">', '</span>'),
+        TokenType.Cite: ('<cite>', '</cite>'),
+        TokenType.Epigraph: ('<span class="epigraph">', '</span>'),
+        TokenType.Paragraph: ('<p>', '</p>'),
+        TokenType.Code: ('<span class="monospace>', '</span>'),
+        TokenType.Title: ('<div class="heading">', '</div>'),
+        TokenType.EmptyLine: ('<br>', ''),
+    }
+
+    TOKEN_HANDLERS = {
+        TokenType.Link: _link_to_html
+    }
+
     def __init__(self):
         super().__init__()
         self.text = ''
@@ -99,15 +136,27 @@ class PlainTextParser(BaseParser):
     def handle(self, token, closing=False):
         if token.type == TokenType.Word:
             self.text += (token.attributes['text'] + ' ')
-        elif token.type == TokenType.Paragraph:
+        elif token.type in self.TOKEN_TO_TAG:
+            open_tag, close_tag = self.TOKEN_TO_TAG[token.type]
             if closing:
-                self.text += '\n'
+                self.text += close_tag
             else:
-                self.text += '\t'
+                self.text += open_tag
+        elif token.type in self.TOKEN_HANDLERS:
+            handler = self.TOKEN_HANDLERS[token.type]
+            self.text += handler(token, closing)
 
 
-def parse_as_plain_text(tokens):
-    parser = PlainTextParser()
+def parse_as_plain_text(tokens, line_breaks=True):
+    parser = PlainTextParser(line_breaks=line_breaks)
+    for t in tokens:
+        parser.add(t)
+
+    return parser.text
+
+
+def parse_as_html(tokens):
+    parser = HTMLParser()
     for t in tokens:
         parser.add(t)
 
