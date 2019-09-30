@@ -1,7 +1,4 @@
 from collections import deque, namedtuple
-from typing import List, NamedTuple, Optional, Dict, Union
-from PIL import Image
-from parsing.rich_text import RichText
 
 """
 Abstract book parser based on FB2 format
@@ -13,49 +10,81 @@ book parsing possible.
 """
 
 
-MaybeString = Optional[str]
-
 class SectionHeader(namedtuple('SectionHeader', [
     'title', 'image'
 ])):
     pass
+
 
 class Section(namedtuple('Section', [
     'header', 'contents', 'subsections'
 ])):
     pass
 
+
 class Author(namedtuple('Author', [
     'first_name', 'last_name', 'nickname'
 ])):
     pass
 
-class Description(NamedTuple):
-    title: str
-    authors: List[Author]
-    genres: List[str]
-    date: str
-    cover: Optional[str]
-    annotation: Optional[RichText]
-    series: List[str]
+
+class Description(namedtuple('Description', [
+    'title',
+    'authors',
+    'genres',
+    'date',
+    'cover',
+    'annotation',
+    'series'
+])):
+    """
+    Fields
+        title: str
+        authors: List[Author]
+        genres: List[str]
+        date: str
+        cover: Optional[str]
+        annotation: Optional[RichText]
+        series: List[str]
+    """
 
 
-class MetaInfo(NamedTuple):
-    filename: str
-    uid: str
-    format: str
+class MetaInfo(namedtuple('MetaInfo', [
+    'filename',
+    'uid',
+    'format'
+])):
+    """
+    Fields:
+        filename: str
+        uid: str
+        format: str
+    """
 
 
-class Book(NamedTuple):
-    description: Description
-    meta_info: MetaInfo
-    sections: List
-    images: Dict[str, Image.Image]
+class Book(namedtuple('Book', [
+    'description',
+    'meta_info',
+    'sections',
+    'images'
+])):
+    """
+    Fields:
+        description: Description
+        meta_info: MetaInfo
+        sections: List
+        images: Dict[str, Image.Image]
+    """
 
 
-class FlatSection(NamedTuple):
-    section: Section
-    depth: int
+class FlatSection(namedtuple('FlatSection', [
+    'section', 'depth'
+])):
+    """
+    Fields:
+        section: Section
+        depth: int
+    """
 
 
 def get_flat_sections(book):
