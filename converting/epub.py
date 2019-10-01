@@ -1,7 +1,7 @@
 from collections import deque, namedtuple
 from uuid import uuid4
 from ebooklib import epub
-from parsing.rich_text import parse_as_plain_text, parse_as_html
+from converting.converters import to_plain_text, to_html
 from parsing.book import get_flat_sections
 
 def _author_to_str(author):
@@ -38,12 +38,21 @@ def _node_to_toc(node):
 
 
 def _title_to_plain_text(title):
-    title_str = parse_as_plain_text(title, line_breaks=False)
+    title_str = to_plain_text(title, line_breaks=False)
     title_str = title_str.replace('\n', ' ')
     return title_str
 
 
 def make_toc(flat_sections, epub_chapters):
+    """
+    Convert flat chapters into a tree structure (EPUB table of contents)
+
+    Args:
+        flat_sections (list):
+            List of parsing.book.FlatSection
+        epub_chapters (list):
+            List of epub.EpubHtml
+    """
     prev_depth = -1
     toc_branches = deque()
     root = Node(epub.Section('Book'), None, [])
@@ -106,8 +115,10 @@ def book_to_epub(book, epub_filename):
             rel='stylesheet',
             type='text/css')
 
-        title_html = parse_as_html(section.header.title)
-        html = title_html + parse_as_html(section.contents)
+        title_html = to_html(section.header.title)
+        section_html = to_html(section.contents)
+        html = title_html + section_html
+
         epub_chapter.content = html.encode('utf-8')
         epub_book.add_item(epub_chapter)
         epub_chapters.append(epub_chapter)

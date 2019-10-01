@@ -1,4 +1,3 @@
-from xml.etree import ElementTree
 from parsing.utils import remove_prefix
 
 fb2_ns = 'http://www.gribuser.ru/xml/fictionbook/2.0'
